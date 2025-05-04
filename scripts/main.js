@@ -137,7 +137,6 @@ let boolShowDebugInfo = true;
 const ELEM_BTN_SHOW_HIDE_DEBUG_INFO = document.getElementById("btn-show-hide-debug-info");
 const ELEM_DEBUG_INFO = document.getElementById("debug-info");
 
-
 let flagdoublepress = false;
 
 let flagDialogOpen = false;
@@ -592,14 +591,19 @@ function updateAlg() {
   if (currentTrainCaseNumber >= 0 && mode == 1) {
     const CURRENT_TRAIN_CASE = trainCaseList[currentTrainCaseNumber];
     if (!CURRENT_TRAIN_CASE.getMirroring()) {
-      if (considerAUFinAlg) tempAlgRight = StringManipulation.addAUFtoHint(tempAlgRight, CURRENT_TRAIN_CASE.getAUFNum());
       CURRENT_TRAIN_CASE.setAlgHint(tempAlgRight);
-      ELEM_TWISTY_PLAYER.alg = tempAlgRight;
+      // if (considerAUFinAlg) tempAlgRight = StringManipulation.addAUFtoHint(tempAlgRight, CURRENT_TRAIN_CASE.getAUFNum());
+      // ELEM_TWISTY_PLAYER.alg = tempAlgRight;
     } else {
-      if (considerAUFinAlg) tempAlgLeft = StringManipulation.addAUFtoHint(tempAlgLeft, CURRENT_TRAIN_CASE.getAUFNum());
       CURRENT_TRAIN_CASE.setAlgHint(tempAlgLeft);
-      ELEM_TWISTY_PLAYER.alg = tempAlgLeft;
+      // if (considerAUFinAlg) tempAlgLeft = StringManipulation.addAUFtoHint(tempAlgLeft, CURRENT_TRAIN_CASE.getAUFNum());
+      // ELEM_TWISTY_PLAYER.alg = tempAlgLeft;
     }
+    ELEM_SCRAMBLE.innerHTML = trainCaseList[currentTrainCaseNumber].getSelectedScrambleAUF();
+    ELEM_TWISTY_PLAYER.experimentalSetupAlg =
+      "z2 y' " + trainCaseList[currentTrainCaseNumber].getSelectedScrambleTwisty();
+    ELEM_TWISTY_PLAYER.alg = CURRENT_TRAIN_CASE.getAlgHintAUF();
+    ELEM_DEBUG_INFO.innerHTML = trainCaseList[currentTrainCaseNumber].getDebugInfo();
   }
 
   // Reset Twisty Player progressbar
