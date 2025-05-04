@@ -1894,5 +1894,4 @@ function openDialog(ELEM) {
   ELEM.showModal();
   ELEM_BODY.style.overflow = "hidden";
   flagDialogOpen = true;
-  console.log("dialog open");
 }
