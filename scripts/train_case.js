@@ -1,4 +1,5 @@
 class TrainCase {
+  static currentTrainCaseNumber = -1;
   #indexGroup;
   #indexCase;
   #indexScramble;
