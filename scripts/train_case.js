@@ -62,19 +62,21 @@ class TrainCase {
       tempAlgHintLeft = GROUP.customAlgorithmsLeft[this.#indexCase];
     } else {
       // Default algorithm
-      tempAlgHintLeft = mirrorAlg(GROUP.algorithms[this.#indexCase + 1][GROUP.algorithmSelectionLeft[this.#indexCase]]);
+      tempAlgHintLeft = StringManipulation.mirrorAlg(
+        GROUP.algorithms[this.#indexCase + 1][GROUP.algorithmSelectionLeft[this.#indexCase]]
+      );
     }
 
     // Set left or right algorithm
     this.#algHint = tempAlgHintRight;
     if (this.#mirroring) {
-      this.#scramble = mirrorAlg(this.#scramble);
+      this.#scramble = StringManipulation.mirrorAlg(this.#scramble);
       this.#algHint = tempAlgHintLeft;
     }
   }
 
   #addAuf() {
-    [this.#scrambleAUF, this.#scrambleTwisty, this.#algHintAUF, this.#AUFNum] = addAUF(
+    [this.#scrambleAUF, this.#scrambleTwisty, this.#algHintAUF, this.#AUFNum] = StringManipulation.addAUF(
       this.#scramble,
       aufSelection,
       considerAUFinAlg,
@@ -86,6 +88,7 @@ class TrainCase {
   //#region Setters
   setAlgHint(algHint) {
     this.#algHint = algHint;
+    this.#addAuf();
   }
   //#endregion Setters
 
@@ -116,7 +119,7 @@ class TrainCase {
   }
   //#endregion Getters
 
-  //# region Additional
+  //#region Additional
   incrementSolveCounter() {
     const GROUP = GROUPS[this.#indexGroup];
     GROUP.solveCounter[this.#indexCase]++;
@@ -135,7 +138,7 @@ class TrainCase {
       ", Scramble " +
       +this.#indexScramble +
       ", AUF " +
-      U_MOVES[this.#AUFNum] +
+      StringManipulation.u_moves[this.#AUFNum] +
       ", " +
       CATEGORY_NAMES[GROUP.caseSelection[this.#indexCase]] +
       ", Algorithm " +

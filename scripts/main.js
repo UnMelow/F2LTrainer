@@ -541,12 +541,12 @@ function updateAlg() {
   if (ELEM_SWITCH_RIGHT.checked) {
     editAlgGlobal.customAlgRight = ELEM_EDITALG_CUSTOMALG.value;
     if (ELEM_IDENTICAL_ALG.checked) {
-      editAlgGlobal.customAlgLeft = mirrorAlg(editAlgGlobal.customAlgRight);
+      editAlgGlobal.customAlgLeft = StringManipulation.mirrorAlg(editAlgGlobal.customAlgRight);
     }
   } else {
     editAlgGlobal.customAlgLeft = ELEM_EDITALG_CUSTOMALG.value;
     if (ELEM_IDENTICAL_ALG.checked) {
-      editAlgGlobal.customAlgRight = mirrorAlg(editAlgGlobal.customAlgLeft);
+      editAlgGlobal.customAlgRight = StringManipulation.mirrorAlg(editAlgGlobal.customAlgLeft);
     }
   }
 
@@ -573,7 +573,7 @@ function updateAlg() {
   // Check if selected left alg is default or custom
   if (editAlgGlobal.selectedAlgNumberLeft < GROUP.algorithms[INDEX_CASE + 1].length) {
     // If selected Alg is default
-    tempAlgLeft = mirrorAlg(GROUP.algorithms[INDEX_CASE + 1][editAlgGlobal.selectedAlgNumberLeft]);
+    tempAlgLeft = StringManipulation.mirrorAlg(GROUP.algorithms[INDEX_CASE + 1][editAlgGlobal.selectedAlgNumberLeft]);
   } else {
     // If selected Alg is custom
     tempAlgLeft = editAlgGlobal.customAlgLeft;
@@ -592,11 +592,11 @@ function updateAlg() {
   if (currentTrainCaseNumber >= 0 && mode == 1) {
     const CURRENT_TRAIN_CASE = trainCaseList[currentTrainCaseNumber];
     if (!CURRENT_TRAIN_CASE.getMirroring()) {
-      if (considerAUFinAlg) tempAlgRight = addAUFtoHint(tempAlgRight, CURRENT_TRAIN_CASE.getAUFNum());
+      if (considerAUFinAlg) tempAlgRight = StringManipulation.addAUFtoHint(tempAlgRight, CURRENT_TRAIN_CASE.getAUFNum());
       CURRENT_TRAIN_CASE.setAlgHint(tempAlgRight);
       ELEM_TWISTY_PLAYER.alg = tempAlgRight;
     } else {
-      if (considerAUFinAlg) tempAlgLeft = addAUFtoHint(tempAlgLeft, CURRENT_TRAIN_CASE.getAUFNum());
+      if (considerAUFinAlg) tempAlgLeft = StringManipulation.addAUFtoHint(tempAlgLeft, CURRENT_TRAIN_CASE.getAUFNum());
       CURRENT_TRAIN_CASE.setAlgHint(tempAlgLeft);
       ELEM_TWISTY_PLAYER.alg = tempAlgLeft;
     }
@@ -780,7 +780,7 @@ function switchLeftRight() {
 
     // If identical is checked, show the same (mirrored) alg
     if (ELEM_IDENTICAL_ALG.checked) {
-      ELEM_EDITALG_CUSTOMALG.value = mirrorAlg(editAlgGlobal.customAlgLeft);
+      ELEM_EDITALG_CUSTOMALG.value = StringManipulation.mirrorAlg(editAlgGlobal.customAlgLeft);
     }
   } else {
     // Code for left case
@@ -790,7 +790,7 @@ function switchLeftRight() {
 
     // Fill textboxes with algorithms for left case
     for (let index = 0; index < GROUP.algorithms[INDEX_CASE + 1].length; index++) {
-      ELEM_EDITALG_LISTENTRY[index].innerHTML = mirrorAlg(GROUP.algorithms[INDEX_CASE + 1][index]);
+      ELEM_EDITALG_LISTENTRY[index].innerHTML = StringManipulation.mirrorAlg(GROUP.algorithms[INDEX_CASE + 1][index]);
     }
 
     // Save current right alg globally
@@ -803,7 +803,7 @@ function switchLeftRight() {
 
     // If identical is checked, show the same (mirrored) alg
     if (ELEM_IDENTICAL_ALG.checked) {
-      ELEM_EDITALG_CUSTOMALG.value = mirrorAlg(editAlgGlobal.customAlgRight);
+      ELEM_EDITALG_CUSTOMALG.value = StringManipulation.mirrorAlg(editAlgGlobal.customAlgRight);
     }
   }
 
@@ -839,11 +839,11 @@ function syncLeftRightAlgSelection() {
   // Sync custom algs, if custom alg is selected
   if (ELEM_SWITCH_RIGHT.checked) {
     if (editAlgGlobal.selectedAlgNumberRight >= GROUP.algorithms[INDEX_CASE + 1].length) {
-      editAlgGlobal.customAlgLeft = mirrorAlg(editAlgGlobal.customAlgRight);
+      editAlgGlobal.customAlgLeft = StringManipulation.mirrorAlg(editAlgGlobal.customAlgRight);
     }
   } else {
     if (editAlgGlobal.selectedAlgNumberLeft >= GROUP.algorithms[INDEX_CASE + 1].length) {
-      editAlgGlobal.customAlgRight = mirrorAlg(editAlgGlobal.customAlgLeft);
+      editAlgGlobal.customAlgRight = StringManipulation.mirrorAlg(editAlgGlobal.customAlgLeft);
     }
   }
 }
@@ -1675,7 +1675,9 @@ function mirrorCase(indexGroup, indexCase) {
   }
 
   if (GROUP.algorithmSelectionLeft[indexCase] < GROUP.algorithms[indexCase + 1].length) {
-    tempAlgLeft = mirrorAlg(GROUP.algorithms[indexCase + 1][GROUP.algorithmSelectionLeft[indexCase]]);
+    tempAlgLeft = StringManipulation.mirrorAlg(
+      GROUP.algorithms[indexCase + 1][GROUP.algorithmSelectionLeft[indexCase]]
+    );
   } else {
     tempAlgLeft = GROUP.customAlgorithmsLeft[indexCase];
   }
