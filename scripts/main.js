@@ -128,7 +128,6 @@ let mode = 0; // 0: select, 1: train
 
 // List that contains all the randomly selected cases
 let trainCaseList = [];
-let currentTrainCaseNumber = -1;
 
 // Dropdown box (Basic, Basic Back, Advanced, Exert)
 const ELEM_SELECT_GROUP = document.getElementById("select-group-id");
@@ -136,8 +135,6 @@ const ELEM_SELECT_GROUP = document.getElementById("select-group-id");
 let boolShowDebugInfo = true;
 const ELEM_BTN_SHOW_HIDE_DEBUG_INFO = document.getElementById("btn-show-hide-debug-info");
 const ELEM_DEBUG_INFO = document.getElementById("debug-info");
-
-let generatedScrambles = [];
 
 let flagdoublepress = false;
 
@@ -525,7 +522,7 @@ function addElementsToDOM() {
 }
 
 /**
- * Updates the shown algorithm in the selection window and the generatedScrambles array.
+ * Updates the shown algorithm in the selection window and the trainCaseList array.
  * If in train mode, also updates the Twisty Player's algorithm and reset the progressbar.
  * Saves the user data afterwards.
  * Called when user clicks on Confirm in the Change Alg popup.
@@ -542,12 +539,12 @@ function updateAlg() {
   if (ELEM_SWITCH_RIGHT.checked) {
     editAlgGlobal.customAlgRight = ELEM_EDITALG_CUSTOMALG.value;
     if (ELEM_IDENTICAL_ALG.checked) {
-      editAlgGlobal.customAlgLeft = mirrorAlg(editAlgGlobal.customAlgRight);
+      editAlgGlobal.customAlgLeft = StringManipulation.mirrorAlg(editAlgGlobal.customAlgRight);
     }
   } else {
     editAlgGlobal.customAlgLeft = ELEM_EDITALG_CUSTOMALG.value;
     if (ELEM_IDENTICAL_ALG.checked) {
-      editAlgGlobal.customAlgRight = mirrorAlg(editAlgGlobal.customAlgLeft);
+      editAlgGlobal.customAlgRight = StringManipulation.mirrorAlg(editAlgGlobal.customAlgLeft);
     }
   }
 
@@ -574,7 +571,7 @@ function updateAlg() {
   // Check if selected left alg is default or custom
   if (editAlgGlobal.selectedAlgNumberLeft < GROUP.algorithms[INDEX_CASE + 1].length) {
     // If selected Alg is default
-    tempAlgLeft = mirrorAlg(GROUP.algorithms[INDEX_CASE + 1][editAlgGlobal.selectedAlgNumberLeft]);
+    tempAlgLeft = StringManipulation.mirrorAlg(GROUP.algorithms[INDEX_CASE + 1][editAlgGlobal.selectedAlgNumberLeft]);
   } else {
     // If selected Alg is custom
     tempAlgLeft = editAlgGlobal.customAlgLeft;
@@ -590,17 +587,22 @@ function updateAlg() {
   GROUP.divAlgorithm[INDEX_CASE].innerHTML = tempAlg;
 
   // Show selected alg in train mode
-  if (currentTrainCaseNumber >= 0 && mode == 1) {
-    const CURRENT_TRAIN_CASE = generatedScrambles[currentTrainCaseNumber];
-    if (!CURRENT_TRAIN_CASE.mirroring) {
-      if (considerAUFinAlg) tempAlgRight = addAUFtoHint(tempAlgRight, CURRENT_TRAIN_CASE.AUFNum);
-      CURRENT_TRAIN_CASE.algHint = tempAlgRight;
-      ELEM_TWISTY_PLAYER.alg = tempAlgRight;
+  if (TrainCase.currentTrainCaseNumber >= 0 && mode == 1) {
+    const CURRENT_TRAIN_CASE = trainCaseList[TrainCase.currentTrainCaseNumber];
+    if (!CURRENT_TRAIN_CASE.getMirroring()) {
+      CURRENT_TRAIN_CASE.setAlgHint(tempAlgRight);
+      // if (considerAUFinAlg) tempAlgRight = StringManipulation.addAUFtoHint(tempAlgRight, CURRENT_TRAIN_CASE.getAUFNum());
+      // ELEM_TWISTY_PLAYER.alg = tempAlgRight;
     } else {
-      if (considerAUFinAlg) tempAlgLeft = addAUFtoHint(tempAlgLeft, CURRENT_TRAIN_CASE.AUFNum);
-      CURRENT_TRAIN_CASE.algHint = tempAlgLeft;
-      ELEM_TWISTY_PLAYER.alg = tempAlgLeft;
+      CURRENT_TRAIN_CASE.setAlgHint(tempAlgLeft);
+      // if (considerAUFinAlg) tempAlgLeft = StringManipulation.addAUFtoHint(tempAlgLeft, CURRENT_TRAIN_CASE.getAUFNum());
+      // ELEM_TWISTY_PLAYER.alg = tempAlgLeft;
     }
+    ELEM_SCRAMBLE.innerHTML = trainCaseList[TrainCase.currentTrainCaseNumber].getSelectedScrambleAUF();
+    ELEM_TWISTY_PLAYER.experimentalSetupAlg =
+      "z2 y' " + trainCaseList[TrainCase.currentTrainCaseNumber].getSelectedScrambleTwisty();
+    ELEM_TWISTY_PLAYER.alg = CURRENT_TRAIN_CASE.getAlgHintAUF();
+    ELEM_DEBUG_INFO.innerHTML = trainCaseList[TrainCase.currentTrainCaseNumber].getDebugInfo();
   }
 
   // Reset Twisty Player progressbar
@@ -620,9 +622,9 @@ function updateAlg() {
  */
 function editCurrentAlg() {
   ELEM_BTN_CHANGE_ALG.blur();
-  const INDEX_GROUP = generatedScrambles[currentTrainCaseNumber].indexGroup;
-  const INDEX_CASE = generatedScrambles[currentTrainCaseNumber].indexCase;
-  const MIRRORED = generatedScrambles[currentTrainCaseNumber].mirroring;
+  const INDEX_GROUP = trainCaseList[TrainCase.currentTrainCaseNumber].getIndexGroup();
+  const INDEX_CASE = trainCaseList[TrainCase.currentTrainCaseNumber].getIndexCase();
+  const MIRRORED = trainCaseList[TrainCase.currentTrainCaseNumber].getMirroring();
 
   editAlgs(INDEX_GROUP, INDEX_CASE, MIRRORED);
 }
@@ -781,7 +783,7 @@ function switchLeftRight() {
 
     // If identical is checked, show the same (mirrored) alg
     if (ELEM_IDENTICAL_ALG.checked) {
-      ELEM_EDITALG_CUSTOMALG.value = mirrorAlg(editAlgGlobal.customAlgLeft);
+      ELEM_EDITALG_CUSTOMALG.value = StringManipulation.mirrorAlg(editAlgGlobal.customAlgLeft);
     }
   } else {
     // Code for left case
@@ -791,7 +793,7 @@ function switchLeftRight() {
 
     // Fill textboxes with algorithms for left case
     for (let index = 0; index < GROUP.algorithms[INDEX_CASE + 1].length; index++) {
-      ELEM_EDITALG_LISTENTRY[index].innerHTML = mirrorAlg(GROUP.algorithms[INDEX_CASE + 1][index]);
+      ELEM_EDITALG_LISTENTRY[index].innerHTML = StringManipulation.mirrorAlg(GROUP.algorithms[INDEX_CASE + 1][index]);
     }
 
     // Save current right alg globally
@@ -804,7 +806,7 @@ function switchLeftRight() {
 
     // If identical is checked, show the same (mirrored) alg
     if (ELEM_IDENTICAL_ALG.checked) {
-      ELEM_EDITALG_CUSTOMALG.value = mirrorAlg(editAlgGlobal.customAlgRight);
+      ELEM_EDITALG_CUSTOMALG.value = StringManipulation.mirrorAlg(editAlgGlobal.customAlgRight);
     }
   }
 
@@ -840,11 +842,11 @@ function syncLeftRightAlgSelection() {
   // Sync custom algs, if custom alg is selected
   if (ELEM_SWITCH_RIGHT.checked) {
     if (editAlgGlobal.selectedAlgNumberRight >= GROUP.algorithms[INDEX_CASE + 1].length) {
-      editAlgGlobal.customAlgLeft = mirrorAlg(editAlgGlobal.customAlgRight);
+      editAlgGlobal.customAlgLeft = StringManipulation.mirrorAlg(editAlgGlobal.customAlgRight);
     }
   } else {
     if (editAlgGlobal.selectedAlgNumberLeft >= GROUP.algorithms[INDEX_CASE + 1].length) {
-      editAlgGlobal.customAlgRight = mirrorAlg(editAlgGlobal.customAlgLeft);
+      editAlgGlobal.customAlgRight = StringManipulation.mirrorAlg(editAlgGlobal.customAlgLeft);
     }
   }
 }
@@ -932,8 +934,8 @@ function keyup(e) {
  * - hintImageSelection
  * - hintAlgSelection
  * - timerEnabled
- * - currentTrainCaseNumber
- * - generatedScrambles
+ * - TrainCase.currentTrainCaseNumber
+ * - trainCaseList
  *
  * Then it generates a new list of cases to be trained and updates the hint visibility.
  * Finally, it displays the next scramble.
@@ -966,10 +968,9 @@ function updateTrainCases() {
     ELEM_TIMER.style.display = "none";
   }
 
-  currentTrainCaseNumber = -1;
-  generatedScrambles = [];
   closeOverlays();
-  // updateHintImgVisibility();
+  trainCaseList = [];
+  TrainCase.currentTrainCaseNumber = -1;
   generateTrainCaseList();
   nextScramble(1);
 }
@@ -1006,7 +1007,7 @@ function showHintAlg() {
       if (hintAlgSelection == 2) {
         // "Show all time"
         ELEM_HINT_PLACEHOLDER.style.display = "none";
-        ELEM_HINT_ALG.innerText = generatedScrambles[currentTrainCaseNumber].algHint;
+        ELEM_HINT_ALG.innerText = trainCaseList[TrainCase.currentTrainCaseNumber].getAlgHint();
         ELEM_HINT_ALG.style.display = "flex";
       } else if (hintAlgSelection == 0 || hintAlgSelection == 1) {
         // "Reveal step-by-step" or "Reveal all at once"
@@ -1017,7 +1018,7 @@ function showHintAlg() {
   } else {
     // hintCounter >= 0
     // Return if no scrambles available or hint is visible by default
-    if (generatedScrambles.length == 0 || hintAlgSelection == 2) return;
+    if (trainCaseList.length == 0 || hintAlgSelection == 2) return;
 
     // Show hint image if no hint image is selected but hint alg button is pressed
     if (hintImageSelection == 0) {
@@ -1026,7 +1027,7 @@ function showHintAlg() {
     }
 
     // Get algorithm and convert to list
-    const ALG_LIST = generatedScrambles[currentTrainCaseNumber].algHint.split(" ");
+    const ALG_LIST = trainCaseList[TrainCase.currentTrainCaseNumber].getAlgHint().split(" ");
 
     if (twistyLoadFlag) {
       // Hide hint placeholder
@@ -1088,15 +1089,15 @@ function showSelectedGroup() {
 /**
  * Generates a new list of cases to be trained and adds them to the current list.
  * Called when settings are changed or when the list of cases to be trained is empty.
- * Adds all cases that shall be learned to trainCaseList, chooses a random scramble for each case,
+ * Adds all cases that shall be learned to trainCaseListTemp, chooses a random scramble for each case,
  * gets the hint algorithm for each case, mirrors the algorithm and scramble if right selection is true,
  * adds a random U move to the scramble if auf selection is true, and adds the case to the list.
  * Randomizes the order of the cases in the list, and adds the new cases to the current list.
  * If no cases are selected, the text "no case selected" is displayed on the page.
  */
 function generateTrainCaseList() {
-  trainCaseList = [];
-  // Add all cases that shall be learned to trainCaseList
+  let trainCaseListTemp = [];
+  // Add all cases that shall be learned to trainCaseListTemp
   for (let indexGroup = 0; indexGroup < GROUPS.length; indexGroup++) {
     const GROUP = GROUPS[indexGroup];
     // Skip if group is not selected in settings
@@ -1106,94 +1107,32 @@ function generateTrainCaseList() {
         let indexCase = categoryItem - 1;
         for (let state = 0; state < trainStateSelection.length; state++) {
           // Check if case is in selected state
-          if (trainStateSelection[state] && GROUP.caseSelection[indexCase] == state) {
-            if (GROUP.scrambles[indexCase + 1] == undefined)
-              console.warn(
-                "GROUP.scrambles[indexCase + 1] == undefined\nindexGroup: " +
-                  indexGroup +
-                  "\nindexCase: " +
-                  indexCase +
-                  "\ngroup.scrambles: " +
-                  GROUP.scrambles
-              );
+          if (!(trainStateSelection[state] && GROUP.caseSelection[indexCase] == state)) continue;
 
-            // Choose random scramble for current case
-            const INDEX_SCRAMBLE = parseInt(Math.random() * GROUP.scrambles[indexCase + 1].length);
-            let selectedScramble = GROUP.scrambles[indexCase + 1][INDEX_SCRAMBLE];
-
-            let algHint,
-              algHintRight,
-              algHintLeft = "";
-
-            // Get hint algorithm for current case (left and right, select later)
-            if (GROUP.algorithmSelectionRight[indexCase] >= GROUP.algorithms[indexCase + 1].length) {
-              algHintRight = GROUP.customAlgorithmsRight[indexCase];
-            } else {
-              algHintRight = GROUP.algorithms[indexCase + 1][GROUP.algorithmSelectionRight[indexCase]];
-            }
-            if (GROUP.algorithmSelectionLeft[indexCase] >= GROUP.algorithms[indexCase + 1].length) {
-              algHintLeft = GROUP.customAlgorithmsLeft[indexCase];
-            } else {
-              algHintLeft = mirrorAlg(GROUP.algorithms[indexCase + 1][GROUP.algorithmSelectionLeft[indexCase]]);
-            }
-
-            // Mirror algorithm
-            let mirroring;
-            if (rightSelection && leftSelection) {
-              mirroring = parseInt(Math.floor(Math.random() * 2));
-            } else if (rightSelection && !leftSelection) {
-              mirroring = 0;
-            } else if (!rightSelection && leftSelection) {
-              mirroring = 1;
-            }
-
-            algHint = algHintRight;
-            if (mirroring) {
-              selectedScramble = mirrorAlg(selectedScramble);
-              algHint = algHintLeft;
-            }
-
-            // Add random U move to selected scramble
-            // let selectedScrambleAUF;
-            // if (aufSelection) AUF = Math.floor(Math.random() * 4);
-
-            let [selectedScrambleAUF, selectedScrambleTwisty, algHintAUF, AUFNum] = addAUF(
-              selectedScramble,
-              aufSelection,
-              considerAUFinAlg,
-              algHint
+          if (GROUP.scrambles[indexCase + 1] == undefined)
+            console.warn(
+              "GROUP.scrambles[indexCase + 1] == undefined\nindexGroup: " +
+                indexGroup +
+                "\nindexCase: " +
+                indexCase +
+                "\ngroup.scrambles: " +
+                GROUP.scrambles
             );
 
-            // console.log("---" + selectedScrambleAUF + "----" + algHintAUF);
-
-            const CASE_TO_ADD = {
-              indexGroup: indexGroup,
-              indexCase: indexCase,
-              indexScramble: INDEX_SCRAMBLE,
-              mirroring: mirroring,
-              selectedScrambleAUF: selectedScrambleAUF,
-              selectedScrambleTwisty: selectedScrambleTwisty,
-              algHint: algHint,
-              algHintAUF: algHintAUF,
-              AUFNum: AUFNum,
-            };
-
-            trainCaseList.push(CASE_TO_ADD);
-            break;
-          }
+          trainCaseListTemp.push(new TrainCase(indexGroup, indexCase));
         }
       }
     }
   }
 
   // Exit if no cases are selected
-  if (trainCaseList.length == 0) ELEM_SCRAMBLE.innerHTML = "no case selected";
+  if (trainCaseListTemp.length == 0) ELEM_SCRAMBLE.innerHTML = "no case selected";
 
   // Randomize Cases
-  trainCaseList.sort(() => Math.random() - 0.5);
+  trainCaseListTemp.sort(() => Math.random() - 0.5);
 
   // Add new cases to current list
-  generatedScrambles = generatedScrambles.concat(trainCaseList);
+  trainCaseList = trainCaseList.concat(trainCaseListTemp);
 }
 
 /**
@@ -1209,38 +1148,32 @@ function nextScramble(nextPrevious) {
     ELEM_LOADING_CASE.classList.remove(CLASS_DISPLAY_NONE);
   }
 
-  if (generatedScrambles.length == 0) return;
+  if (trainCaseList.length == 0) return;
 
   if (nextPrevious) {
-    if (currentTrainCaseNumber >= 0)
-      // Increase Solve Counter
-      GROUPS[generatedScrambles[currentTrainCaseNumber].indexGroup].solveCounter[
-        generatedScrambles[currentTrainCaseNumber].indexCase
-      ]++;
-    currentTrainCaseNumber++;
-    if (currentTrainCaseNumber >= generatedScrambles.length) {
+    if (TrainCase.currentTrainCaseNumber >= 0) trainCaseList[TrainCase.currentTrainCaseNumber].incrementSolveCounter();
+    TrainCase.currentTrainCaseNumber++;
+    if (TrainCase.currentTrainCaseNumber >= trainCaseList.length) {
       generateTrainCaseList();
-      if (generatedScrambles.length <= 0) {
-        return;
-      }
+      if (trainCaseList.length <= 0) return;
     }
-  } else if (currentTrainCaseNumber > 0) {
-    currentTrainCaseNumber--;
+  } else if (TrainCase.currentTrainCaseNumber > 0) {
+    TrainCase.currentTrainCaseNumber--;
   }
 
-  if (generatedScrambles[currentTrainCaseNumber] == undefined) return;
+  if (trainCaseList[TrainCase.currentTrainCaseNumber] == undefined) return;
 
   // Update scramble text
-  ELEM_SCRAMBLE.innerHTML = generatedScrambles[currentTrainCaseNumber].selectedScrambleAUF;
+  ELEM_SCRAMBLE.innerHTML = trainCaseList[TrainCase.currentTrainCaseNumber].getSelectedScrambleAUF();
 
   // Reset hint counter
   hintCounter = -1;
   showHintAlg();
 
   // Update hint image
-  const INDEX_GROUP = generatedScrambles[currentTrainCaseNumber].indexGroup;
-  const INDEX_CASE = generatedScrambles[currentTrainCaseNumber].indexCase;
-  const MIRRORING = generatedScrambles[currentTrainCaseNumber].mirroring;
+  const INDEX_GROUP = trainCaseList[TrainCase.currentTrainCaseNumber].getIndexGroup();
+  const INDEX_CASE = trainCaseList[TrainCase.currentTrainCaseNumber].getIndexCase();
+  const MIRRORING = trainCaseList[TrainCase.currentTrainCaseNumber].getMirroring();
   const GROUP = GROUPS[INDEX_GROUP];
 
   if (!MIRRORING) {
@@ -1250,9 +1183,9 @@ function nextScramble(nextPrevious) {
   }
 
   ELEM_TWISTY_PLAYER.experimentalSetupAlg =
-    "z2 y' " + generatedScrambles[currentTrainCaseNumber].selectedScrambleTwisty;
+    "z2 y' " + trainCaseList[TrainCase.currentTrainCaseNumber].getSelectedScrambleTwisty();
 
-  ELEM_TWISTY_PLAYER.alg = generatedScrambles[currentTrainCaseNumber].algHintAUF;
+  ELEM_TWISTY_PLAYER.alg = trainCaseList[TrainCase.currentTrainCaseNumber].getAlgHintAUF();
   resetTwistyPlayerView();
 
   ELEM_TWISTY_PLAYER.jumpToStart?.();
@@ -1261,22 +1194,7 @@ function nextScramble(nextPrevious) {
 
   hidePieces(GROUP.piecesToHide, INDEX_CASE, MIRRORING);
 
-  ELEM_DEBUG_INFO.innerHTML =
-    GROUPS[INDEX_GROUP].name +
-    ", Case " +
-    (INDEX_CASE + 1) +
-    ", Scramble " +
-    +generatedScrambles[currentTrainCaseNumber].indexScramble +
-    ", AUF " +
-    U_MOVES[generatedScrambles[currentTrainCaseNumber].AUFNum] +
-    ", " +
-    CATEGORY_NAMES[GROUPS[INDEX_GROUP].caseSelection[INDEX_CASE]] +
-    ", Algorithm " +
-    GROUPS[INDEX_GROUP].algorithmSelectionRight[INDEX_CASE] +
-    ", " +
-    STRING_MIRRORED[MIRRORING] +
-    " Slot, Solve Counter: " +
-    GROUP.solveCounter[INDEX_CASE];
+  ELEM_DEBUG_INFO.innerHTML = trainCaseList[TrainCase.currentTrainCaseNumber].getDebugInfo();
 
   currentTrainGroup = INDEX_GROUP;
   currentTrainCase = INDEX_CASE;
@@ -1760,7 +1678,9 @@ function mirrorCase(indexGroup, indexCase) {
   }
 
   if (GROUP.algorithmSelectionLeft[indexCase] < GROUP.algorithms[indexCase + 1].length) {
-    tempAlgLeft = mirrorAlg(GROUP.algorithms[indexCase + 1][GROUP.algorithmSelectionLeft[indexCase]]);
+    tempAlgLeft = StringManipulation.mirrorAlg(
+      GROUP.algorithms[indexCase + 1][GROUP.algorithmSelectionLeft[indexCase]]
+    );
   } else {
     tempAlgLeft = GROUP.customAlgorithmsLeft[indexCase];
   }
@@ -1816,7 +1736,7 @@ function hideResetButton() {
  */
 function resetTwistyPlayerView() {
   // Reset twisty player (3D cube in train mode)
-  const MIRRORING = generatedScrambles[currentTrainCaseNumber].mirroring;
+  const MIRRORING = trainCaseList[TrainCase.currentTrainCaseNumber].getMirroring();
 
   if (!MIRRORING) {
     ELEM_TWISTY_PLAYER.cameraLongitude = TWISTY_PLAYER_CAMERA.LONGITUDE;
@@ -1974,5 +1894,4 @@ function openDialog(ELEM) {
   ELEM.showModal();
   ELEM_BODY.style.overflow = "hidden";
   flagDialogOpen = true;
-  console.log("dialog open");
 }

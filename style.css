@@ -872,6 +872,8 @@ twisty-alg-viewer .wrapper {
 #debug-info {
   display: block;
   font-size: 1rem;
+  text-align: center;
+  text-wrap: pretty;
 }
 
 .img-instructions {
