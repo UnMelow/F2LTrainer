@@ -1044,7 +1044,7 @@ function showHintAlg() {
 
         // Show one move at a time
         const maxViewerMoves = ELEMS_TWISTY_ALG_MOVE.length;
-        const maxMoves = Math.min(ALG_LIST.length, maxViewerMoves);
+        const maxMoves = Math.max(ALG_LIST.length, maxViewerMoves);
         if (hintCounter < maxMoves && ELEMS_TWISTY_ALG_MOVE[hintCounter]) {
           ELEMS_TWISTY_ALG_MOVE[hintCounter].style.visibility = "visible";
           hintCounter++;
